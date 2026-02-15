@@ -2,7 +2,7 @@
 const CACHE_NAME = 'taskflow-v1';
 const urlsToCache = [
   './',
-  './todo.html',
+  './index.html',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Patrick+Hand&display=swap'
 ];
