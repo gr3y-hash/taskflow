@@ -2,7 +2,7 @@
   "name": "TaskFlow - Your Friendly Task Companion",
   "short_name": "TaskFlow",
   "description": "A beautiful handwritten-style todo app to manage your daily tasks",
-  "start_url": "./todo.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F5F0E8",
