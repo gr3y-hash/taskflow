@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#F5F0E8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="TaskFlow">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Patrick+Hand&family=Comic+Neue:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --chocolate-dark: #5D4037;
+            --chocolate-medium: #795548;
+            --chocolate-light: #8D6E63;
+            --beige-light: #F5F0E8;
+            --beige-medium: #EDE4D3;
+            --beige-dark: #D7CCC8;
+            --peanut: #D4A574;
+            --peanut-light: #E8C9A0;
+            --peanut-dark: #B8956E;
+            --cream: #FFF8E7;
+            --white: #FFFFFF;
+            --shadow: rgba(93, 64, 55, 0.12);
+            --shadow-strong: rgba(93, 64, 55, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Patrick Hand', cursive;
+            min-height: 100vh;
+            background: var(--beige-light);
+            color: var(--chocolate-dark);
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* Notebook paper effect */
+        .notebook-page {
+            position: relative;
+            min-height: 100vh;
+            background:
+                /* Horizontal lines like notebook */
+                linear-gradient(transparent 95%, var(--beige-dark) 95%);
+            background-size: 100% 2rem;
+        }
+
+        /* Left margin line (notebook spiral) */
+        .notebook-page::before {
+            content: '';
+            position: fixed;
+            left: 1.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom,
+                transparent 0%,
+                var(--peanut-light) 5%,
+                var(--peanut-light) 95%,
+                transparent 100%
+            );
+        }
+
+        /* Spiral binding holes */
+        .spiral-holes {
+            position: fixed;
+            left: 0.6rem;
+            top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            z-index: 10;
+        }
+
+        .spiral-hole {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--chocolate-medium);
+            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Hand-drawn animals - blended into background */
+        .page-decoration {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .cat-deco {
+            top: 5%;
+            right: 3%;
+            width: 180px;
+            height: 180px;
+        }
+
+        .cat-deco svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .bunny-deco {
+            bottom: 8%;
+            left: 4%;
+            width: 160px;
+            height: 160px;
+        }
+
+        .bunny-deco svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Main container */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            padding-left: 2.5rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 1.25rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .logo-icon {
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, var(--peanut) 0%, var(--peanut-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 0 var(--chocolate-dark);
+            transform: rotate(-2deg);
+        }
+
+        .logo-icon svg {
+            width: 1.75rem;
+            height: 1.75rem;
+            stroke: white;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .logo-text {
+            font-family: 'Caveat', cursive;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--chocolate-dark);
+        }
+
+        .tagline {
+            font-size: 1rem;
+            color: var(--chocolate-medium);
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: var(--white);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 10px;
+            padding: 0.4rem 0.75rem;
+            text-align: center;
+            box-shadow: 2px 2px 0 var(--chocolate-dark);
+            min-width: 4rem;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--peanut-dark);
+            line-height: 1.1;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--chocolate-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Add task section */
+        .add-task-section {
+            background: var(--white);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 3px 3px 0 var(--chocolate-dark);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .task-input {
+            flex: 1;
+            background: var(--beige-light);
+            border: 2px solid var(--beige-dark);
+            border-radius: 10px;
+            padding: 0.6rem 0.75rem;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1rem;
+            color: var(--chocolate-dark);
+            transition: all 0.3s ease;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: var(--peanut);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.2);
+        }
+
+        .task-input::placeholder {
+            color: var(--chocolate-light);
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, var(--peanut) 0%, var(--peanut-dark) 100%);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 10px;
+            padding: 0.6rem 1rem;
+            color: white;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            box-shadow: 2px 2px 0 var(--chocolate-dark);
+            white-space: nowrap;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 3px 3px 0 var(--chocolate-dark);
+        }
+
+        .add-btn:active {
+            transform: translateY(1px);
+            box-shadow: 1px 1px 0 var(--chocolate-dark);
+        }
+
+        .add-btn svg {
+            width: 1.1rem;
+            height: 1.1rem;
+            stroke: white;
+            fill: none;
+            stroke-width: 2.5;
+            flex-shrink: 0;
+        }
+
+        .task-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex: 1;
+            min-width: fit-content;
+        }
+
+        .option-group:last-child {
+            flex: 0 0 auto;
+        }
+
+        .option-label {
+            font-size: 0.85rem;
+            color: var(--chocolate-medium);
+            white-space: nowrap;
+        }
+
+        .option-select, .date-input {
+            background: var(--beige-light);
+            border: 2px solid var(--beige-dark);
+            border-radius: 8px;
+            padding: 0.35rem 0.5rem;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 0.85rem;
+            color: var(--chocolate-dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            max-width: 100%;
+        }
+
+        .option-select:focus, .date-input:focus {
+            outline: none;
+            border-color: var(--peanut);
+        }
+
+        /* Search and filter */
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 60%;
+            background: var(--white);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 10px;
+            padding: 0.4rem 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 2px 2px 0 var(--chocolate-dark);
+        }
+
+        .search-box svg {
+            width: 1rem;
+            height: 1rem;
+            stroke: var(--chocolate-medium);
+            fill: none;
+            stroke-width: 2;
+            flex-shrink: 0;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 0.95rem;
+            color: var(--chocolate-dark);
+            min-width: 0;
+        }
+
+        .search-box input:focus {
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--chocolate-light);
+        }
+
+        .filter-btn {
+            background: var(--white);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 8px;
+            padding: 0.4rem 0.75rem;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 0.9rem;
+            color: var(--chocolate-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 2px 2px 0 var(--chocolate-dark);
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--peanut);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 2px 2px 0 var(--chocolate-dark);
+        }
+
+        /* Task list */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            padding-bottom: 2rem;
+        }
+
+        .task-item {
+            background: var(--white);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 12px;
+            padding: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            box-shadow: 3px 3px 0 var(--chocolate-dark);
+            transition: all 0.3s ease;
+            animation: popIn 0.4s ease-out backwards;
+        }
+
+        .task-item:nth-child(1) { animation-delay: 0s; }
+        .task-item:nth-child(2) { animation-delay: 0.05s; }
+        .task-item:nth-child(3) { animation-delay: 0.1s; }
+        .task-item:nth-child(4) { animation-delay: 0.15s; }
+        .task-item:nth-child(5) { animation-delay: 0.2s; }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 4px 4px 0 var(--chocolate-dark);
+        }
+
+        .task-item.completed {
+            background: var(--beige-light);
+            opacity: 0.85;
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: var(--chocolate-light);
+        }
+
+        .task-checkbox {
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            margin-top: 2px;
+            background: var(--white);
+        }
+
+        .task-checkbox:hover {
+            background: var(--peanut-light);
+            transform: scale(1.05);
+        }
+
+        .task-checkbox.checked {
+            background: var(--peanut);
+            border-color: var(--chocolate-dark);
+        }
+
+        .task-checkbox svg {
+            width: 0.85rem;
+            height: 0.85rem;
+            stroke: white;
+            stroke-width: 3;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .task-checkbox.checked svg {
+            opacity: 1;
+        }
+
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-title {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+            word-break: break-word;
+            color: var(--chocolate-dark);
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .task-tag {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border: 1.5px solid;
+        }
+
+        .tag-work { background: rgba(212, 165, 116, 0.2); color: var(--peanut-dark); border-color: var(--peanut); }
+        .tag-personal { background: rgba(141, 110, 99, 0.2); color: var(--chocolate-medium); border-color: var(--chocolate-light); }
+        .tag-urgent { background: rgba(239, 68, 68, 0.15); color: #c62828; border-color: #ef4444; }
+        .tag-shopping { background: rgba(16, 185, 129, 0.15); color: #059669; border-color: #10b981; }
+        .tag-health { background: rgba(245, 158, 11, 0.15); color: #b45309; border-color: #f59e0b; }
+        .tag-default { background: rgba(148, 163, 184, 0.15); color: #64748b; border-color: #94a3b8; }
+
+        .task-priority {
+            font-size: 0.55rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1.5px solid;
+        }
+
+        .priority-high { background: rgba(239, 68, 68, 0.15); color: #c62828; border-color: #ef4444; }
+        .priority-medium { background: rgba(245, 158, 11, 0.15); color: #b45309; border-color: #f59e0b; }
+        .priority-low { background: rgba(16, 185, 129, 0.15); color: #059669; border-color: #10b981; }
+
+        .task-date {
+            font-size: 0.75rem;
+            color: var(--chocolate-medium);
+            display: flex;
+            align-items: center;
+            gap: 0.15rem;
+        }
+
+        .task-date svg {
+            width: 0.8rem;
+            height: 0.8rem;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .task-date.overdue {
+            color: #c62828;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.3rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .task-item:hover .task-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            background: var(--beige-light);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 6px;
+            padding: 0.3rem;
+            color: var(--chocolate-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background: var(--peanut);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .action-btn.delete:hover {
+            background: #ef4444;
+        }
+
+        .action-btn svg {
+            width: 0.9rem;
+            height: 0.9rem;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: var(--white);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 16px;
+            box-shadow: 3px 3px 0 var(--chocolate-dark);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .empty-icon {
+            width: 4.5rem;
+            height: 4.5rem;
+            margin: 0 auto 0.75rem;
+            background: var(--beige-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--beige-dark);
+        }
+
+        .empty-icon svg {
+            width: 2.25rem;
+            height: 2.25rem;
+            stroke: var(--chocolate-light);
+            fill: none;
+            stroke-width: 1.5;
+        }
+
+        .empty-title {
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--chocolate-dark);
+        }
+
+        .empty-text {
+            color: var(--chocolate-medium);
+            font-size: 0.95rem;
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 0.75rem;
+            right: 0.75rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: calc(100vw - 1.5rem);
+        }
+
+        .toast {
+            background: var(--white);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 10px;
+            padding: 0.6rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 3px 3px 0 var(--chocolate-dark);
+            animation: slideInRight 0.3s ease-out;
+            max-width: 280px;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .toast.success { border-left: 4px solid var(--peanut); }
+        .toast.error { border-left: 4px solid #ef4444; }
+        .toast.info { border-left: 4px solid var(--chocolate-medium); }
+
+        .toast-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .toast.success .toast-icon { background: var(--peanut); }
+        .toast.error .toast-icon { background: #ef4444; }
+        .toast.info .toast-icon { background: var(--chocolate-medium); }
+
+        .toast-icon svg {
+            width: 0.7rem;
+            height: 0.7rem;
+            stroke: white;
+            stroke-width: 3;
+        }
+
+        .toast-message {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--chocolate-dark);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(93, 64, 55, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--white);
+            border: 2px solid var(--chocolate-dark);
+            border-radius: 16px;
+            padding: 1.25rem;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 5px 5px 0 var(--chocolate-dark);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal h2 {
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--chocolate-dark);
+        }
+
+        .modal-input {
+            width: 100%;
+            background: var(--beige-light);
+            border: 2px solid var(--beige-dark);
+            border-radius: 8px;
+            padding: 0.6rem;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1rem;
+            color: var(--chocolate-dark);
+            margin-bottom: 0.6rem;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--peanut);
+            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.2);
+        }
+
+        .modal-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .modal-select {
+            background: var(--beige-light);
+            border: 2px solid var(--beige-dark);
+            border-radius: 8px;
+            padding: 0.5rem;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 0.9rem;
+            color: var(--chocolate-dark);
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .modal-select:focus {
+            outline: none;
+            border-color: var(--peanut);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--chocolate-dark);
+        }
+
+        .modal-btn.cancel {
+            background: var(--beige-light);
+            color: var(--chocolate-medium);
+        }
+
+        .modal-btn.cancel:hover {
+            background: var(--beige-dark);
+        }
+
+        .modal-btn.save {
+            background: var(--peanut);
+            color: white;
+            box-shadow: 2px 2px 0 var(--chocolate-dark);
+        }
+
+        .modal-btn.save:hover {
+            background: var(--peanut-dark);
+            transform: translateY(-1px);
+            box-shadow: 3px 3px 0 var(--chocolate-dark);
+        }
+
+        /* ========== MOBILE RESPONSIVE ========== */
+        @media screen and (max-width: 480px) {
+            html {
+                font-size: 14px;
+            }
+
+            body {
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            /* Adjust notebook for mobile */
+            .notebook-page::before {
+                left: 1rem;
+                width: 1px;
+            }
+
+            .spiral-holes {
+                left: 0.4rem;
+                gap: 2rem;
+                top: 1.5rem;
+            }
+
+            .spiral-hole {
+                width: 10px;
+                height: 10px;
+            }
+
+            /* Smaller decorations on mobile */
+            .page-decoration {
+                opacity: 0.1;
+            }
+
+            .cat-deco {
+                width: 100px;
+                height: 100px;
+                top: 2%;
+                right: 1%;
+            }
+
+            .bunny-deco {
+                width: 90px;
+                height: 90px;
+                bottom: 5%;
+                left: 2%;
+            }
+
+            /* Container */
+            .app-container {
+                padding: 1rem;
+                padding-left: 1.75rem;
+            }
+
+            /* Header */
+            .logo-icon {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+
+            .logo-icon svg {
+                width: 1.4rem;
+                height: 1.4rem;
+            }
+
+            .logo-text {
+                font-size: 2rem;
+            }
+
+            .tagline {
+                font-size: 0.9rem;
+            }
+
+            /* Stats */
+            .stats-bar {
+                gap: 0.4rem;
+            }
+
+            .stat-item {
+                padding: 0.3rem 0.5rem;
+                min-width: 3.5rem;
+                border-radius: 8px;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .stat-label {
+                font-size: 0.6rem;
+            }
+
+            /* Add task section */
+            .add-task-section {
+                padding: 0.75rem;
+                border-radius: 12px;
+            }
+
+            .task-input-wrapper {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .task-input {
+                font-size: 1rem;
+                padding: 0.6rem;
+            }
+
+            .add-btn {
+                justify-content: center;
+                padding: 0.6rem;
+                font-size: 1rem;
+            }
+
+            .task-options {
+                flex-direction: column;
+                gap: 0.4rem;
+            }
+
+            .option-group {
+                width: 100%;
+            }
+
+            .option-group > * {
+                flex: 1;
+            }
+
+            .option-select, .date-input {
+                font-size: 0.85rem;
+                padding: 0.4rem;
+            }
+
+            /* Controls */
+            .controls {
+                flex-direction: column;
+            }
+
+            .search-box {
+                min-width: 100%;
+            }
+
+            .filter-btn {
+                flex: 1;
+                text-align: center;
+            }
+
+            /* Task items */
+            .task-item {
+                padding: 0.6rem;
+                gap: 0.5rem;
+            }
+
+            .task-checkbox {
+                width: 1.35rem;
+                height: 1.35rem;
+            }
+
+            .task-checkbox svg {
+                width: 0.75rem;
+                height: 0.75rem;
+            }
+
+            .task-title {
+                font-size: 0.95rem;
+            }
+
+            .task-meta {
+                gap: 0.3rem;
+            }
+
+            .task-tag, .task-priority {
+                font-size: 0.55rem;
+                padding: 0.1rem 0.3rem;
+            }
+
+            .task-date {
+                font-size: 0.7rem;
+            }
+
+            .task-actions {
+                opacity: 1;
+            }
+
+            .action-btn {
+                padding: 0.25rem;
+            }
+
+            .action-btn svg {
+                width: 0.8rem;
+                height: 0.8rem;
+            }
+
+            /* Empty state */
+            .empty-state {
+                padding: 1.5rem 0.75rem;
+            }
+
+            .empty-icon {
+                width: 3.5rem;
+                height: 3.5rem;
+            }
+
+            .empty-icon svg {
+                width: 1.75rem;
+                height: 1.75rem;
+            }
+
+            .empty-title {
+                font-size: 1.25rem;
+            }
+
+            .empty-text {
+                font-size: 0.85rem;
+            }
+
+            /* Toast */
+            .toast-container {
+                top: 0.5rem;
+                right: 0.5rem;
+                left: 0.5rem;
+            }
+
+            .toast {
+                max-width: 100%;
+            }
+
+            .toast-message {
+                font-size: 0.85rem;
+            }
+
+            /* Modal */
+            .modal {
+                padding: 1rem;
+                border-radius: 12px;
+            }
+
+            .modal h2 {
+                font-size: 1.25rem;
+            }
+
+            .modal-input {
+                font-size: 0.95rem;
+                padding: 0.5rem;
+            }
+
+            .modal-options {
+                gap: 0.4rem;
+            }
+
+            .modal-select {
+                font-size: 0.85rem;
+                padding: 0.4rem;
+            }
+
+            .modal-btn {
+                padding: 0.45rem 0.85rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Small phones */
+        @media screen and (max-width: 360px) {
+            html {
+                font-size: 13px;
+            }
+
+            .stat-item {
+                min-width: 3rem;
+                padding: 0.25rem 0.4rem;
+            }
+
+            .stat-value {
+                font-size: 1.1rem;
+            }
+
+            .logo-text {
+                font-size: 1.75rem;
+            }
+
+            .logo-icon {
+                width: 2.25rem;
+                height: 2.25rem;
+            }
+        }
+
+        /* Landscape mobile */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            .header {
+                margin-bottom: 0.75rem;
+            }
+
+            .logo-icon {
+                width: 2rem;
+                height: 2rem;
+            }
+
+            .logo-icon svg {
+                width: 1.1rem;
+                height: 1.1rem;
+            }
+
+            .logo-text {
+                font-size: 1.75rem;
+            }
+
+            .tagline {
+                display: none;
+            }
+
+            .stats-bar {
+                margin-bottom: 0.5rem;
+                gap: 0.3rem;
+            }
+
+            .stat-item {
+                padding: 0.2rem 0.4rem;
+                min-width: 2.5rem;
+            }
+
+            .stat-value {
+                font-size: 1rem;
+            }
+
+            .add-task-section {
+                padding: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .task-options {
+                gap: 0.3rem;
+            }
+
+            .controls {
+                margin-bottom: 0.5rem;
+            }
+
+            .task-list {
+                gap: 0.4rem;
+                padding-bottom: 1rem;
+            }
+
+            .task-item {
+                padding: 0.5rem;
+            }
+        }
+
+        /* Touch improvements */
+        @media (hover: none) {
+            .task-actions {
+                opacity: 1;
+            }
+
+            .action-btn {
+                padding: 0.4rem;
+            }
+        }
+
+        /* PWA install banner hidden */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="notebook-page">
+        <!-- Spiral binding holes -->
+        <div class="spiral-holes">
+            <div class="spiral-hole"></div>
+            <div class="spiral-hole"></div>
+            <div class="spiral-hole"></div>
+            <div class="spiral-hole"></div>
+            <div class="spiral-hole"></div>
+            <div class="spiral-hole"></div>
+            <div class="spiral-hole"></div>
+            <div class="spiral-hole"></div>
+        </div>
+
+        <!-- Background decorations - hand drawn cat -->
+        <div class="page-decoration cat-deco">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Hand-drawn cat silhouette -->
+                <ellipse cx="50" cy="58" rx="28" ry="26" fill="#D4A574" stroke="#5D4037" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Ears -->
+                <path d="M22 38 L28 52 L16 50 Z" fill="#D4A574" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
+                <path d="M78 38 L72 52 L84 50 Z" fill="#D4A574" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
+                <!-- Inner ears -->
+                <path d="M24 42 L27 49 L20 48 Z" fill="#F5F0E8" stroke="#5D4037" stroke-width="1"/>
+                <path d="M76 42 L73 49 L80 48 Z" fill="#F5F0E8" stroke="#5D4037" stroke-width="1"/>
+                <!-- Eyes -->
+                <ellipse cx="38" cy="52" rx="5" ry="6" fill="#FFFFFF" stroke="#5D4037" stroke-width="1.5"/>
+                <ellipse cx="62" cy="52" rx="5" ry="6" fill="#FFFFFF" stroke="#5D4037" stroke-width="1.5"/>
+                <circle cx="39" cy="53" r="3" fill="#5D4037"/>
+                <circle cx="63" cy="53" r="3" fill="#5D4037"/>
+                <!-- Nose -->
+                <ellipse cx="50" cy="62" rx="4" ry="3" fill="#F5F0E8" stroke="#5D4037" stroke-width="1"/>
+                <!-- Whiskers -->
+                <path d="M25 60 L10 56" stroke="#5D4037" stroke-width="1" stroke-linecap="round"/>
+                <path d="M25 63 L10 65" stroke="#5D4037" stroke-width="1" stroke-linecap="round"/>
+                <path d="M75 60 L90 56" stroke="#5D4037" stroke-width="1" stroke-linecap="round"/>
+                <path d="M75 63 L90 65" stroke="#5D4037" stroke-width="1" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <!-- Background decorations - hand drawn bunny -->
+        <div class="page-decoration bunny-deco">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Body -->
+                <ellipse cx="50" cy="65" rx="25" ry="28" fill="#E8C9A0" stroke="#5D4037" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Ears -->
+                <ellipse cx="35" cy="25" rx="10" ry="22" fill="#E8C9A0" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
+                <ellipse cx="65" cy="25" rx="10" ry="22" fill="#E8C9A0" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
+                <!-- Inner ears -->
+                <ellipse cx="35" cy="25" rx="5" ry="14" fill="#F5F0E8" stroke="#5D4037" stroke-width="1"/>
+                <ellipse cx="65" cy="25" rx="5" ry="14" fill="#F5F0E8" stroke="#5D4037" stroke-width="1"/>
+                <!-- Eyes -->
+                <circle cx="40" cy="55" r="4" fill="#5D4037"/>
+                <circle cx="60" cy="55" r="4" fill="#5D4037"/>
+                <!-- Eye shine -->
+                <circle cx="38" cy="53" r="1.5" fill="#FFFFFF"/>
+                <circle cx="58" cy="53" r="1.5" fill="#FFFFFF"/>
+                <!-- Nose -->
+                <ellipse cx="50" cy="64" rx="3" ry="2" fill="#F5F0E8" stroke="#5D4037" stroke-width="1"/>
+                <!-- Mouth -->
+                <path d="M50 66 L50 70" stroke="#5D4037" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M46 72 Q50 76 54 72" stroke="#5D4037" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                <!-- Cheeks -->
+                <circle cx="32" cy="62" r="5" fill="#F5F0E8" opacity="0.5"/>
+                <circle cx="68" cy="62" r="5" fill="#F5F0E8" opacity="0.5"/>
+            </svg>
+        </div>
+
+        <!-- Toast container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Edit Modal -->
+        <div class="modal-overlay" id="editModal">
+            <div class="modal">
+                <h2>Edit Task</h2>
+                <input type="text" class="modal-input" id="editTaskInput" placeholder="Task title...">
+                <div class="modal-options">
+                    <select class="modal-select" id="editCategory">
+                        <option value="work">Work</option>
+                        <option value="personal">Personal</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="health">Health</option>
+                    </select>
+                    <select class="modal-select" id="editPriority">
+                        <option value="high">High Priority</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low Priority</option>
+                    </select>
+                </div>
+                <input type="date" class="modal-input" id="editDate">
+                <div class="modal-buttons">
+                    <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+                    <button class="modal-btn save" onclick="saveEdit()">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main app -->
+        <div class="app-container">
+            <!-- Header -->
+            <header class="header">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                    </div>
+                    <span class="logo-text">TaskFlow</span>
+                </div>
+                <p class="tagline">Your friendly task companion</p>
+            </header>
+
+            <!-- Stats -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">Done</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="pendingTasks">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="overdueTasks">0</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+            </div>
+
+            <!-- Add task -->
+            <div class="add-task-section">
+                <div class="task-input-wrapper">
+                    <input type="text" class="task-input" id="taskInput" placeholder="What needs to be done?">
+                    <button class="add-btn" onclick="addTask()">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add
+                    </button>
+                </div>
+                <div class="task-options">
+                    <div class="option-group">
+                        <span class="option-label">Category:</span>
+                        <select class="option-select" id="categorySelect">
+                            <option value="work">Work</option>
+                            <option value="personal">Personal</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="health">Health</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <span class="option-label">Priority:</span>
+                        <select class="option-select" id="prioritySelect">
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <span class="option-label">Due:</span>
+                        <input type="date" class="date-input" id="dateInput">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and filter -->
+            <div class="controls">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search tasks...">
+                </div>
+                <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
+                <button class="filter-btn" data-filter="pending" onclick="setFilter('pending')">Pending</button>
+                <button class="filter-btn" data-filter="completed" onclick="setFilter('completed')">Done</button>
+            </div>
+
+            <!-- Task list -->
+            <div class="task-list" id="taskList"></div>
+        </div>
+    </div>
+
+    <script>
+        // App state
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let currentFilter = 'all';
+        let editingTaskId = null;
+        let searchQuery = '';
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTasks();
+            updateStats();
+
+            // Event listeners
+            document.getElementById('taskInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTask();
+            });
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                renderTasks();
+            });
+
+            // Register service worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            }
+        });
+
+        // Add task
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const title = input.value.trim();
+
+            if (!title) {
+                showToast('Please enter a task title', 'error');
+                return;
+            }
+
+            const task = {
+                id: Date.now(),
+                title: title,
+                completed: false,
+                category: document.getElementById('categorySelect').value,
+                priority: document.getElementById('prioritySelect').value,
+                dueDate: document.getElementById('dateInput').value,
+                createdAt: new Date().toISOString()
+            };
+
+            tasks.unshift(task);
+            saveTasks();
+            input.value = '';
+            document.getElementById('dateInput').value = '';
+
+            renderTasks();
+            updateStats();
+            showToast('Task added successfully!', 'success');
+        }
+
+        // Toggle task completion
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+                renderTasks();
+                updateStats();
+                showToast(task.completed ? 'Task completed!' : 'Task marked as pending', 'info');
+            }
+        }
+
+        // Delete task
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveTasks();
+            renderTasks();
+            updateStats();
+            showToast('Task deleted', 'error');
+        }
+
+        // Open edit modal
+        function openEditModal(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            editingTaskId = id;
+            document.getElementById('editTaskInput').value = task.title;
+            document.getElementById('editCategory').value = task.category;
+            document.getElementById('editPriority').value = task.priority;
+            document.getElementById('editDate').value = task.dueDate || '';
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+            editingTaskId = null;
+        }
+
+        // Save edit
+        function saveEdit() {
+            const task = tasks.find(t => t.id === editingTaskId);
+            if (!task) return;
+
+            const newTitle = document.getElementById('editTaskInput').value.trim();
+            if (!newTitle) {
+                showToast('Please enter a task title', 'error');
+                return;
+            }
+
+            task.title = newTitle;
+            task.category = document.getElementById('editCategory').value;
+            task.priority = document.getElementById('editPriority').value;
+            task.dueDate = document.getElementById('editDate').value;
+
+            saveTasks();
+            closeModal();
+            renderTasks();
+            updateStats();
+            showToast('Task updated!', 'success');
+        }
+
+        // Set filter
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            renderTasks();
+        }
+
+        // Render tasks
+        function renderTasks() {
+            const container = document.getElementById('taskList');
+
+            let filteredTasks = tasks.filter(task => {
+                if (searchQuery && !task.title.toLowerCase().includes(searchQuery)) {
+                    return false;
+                }
+                if (currentFilter === 'pending' && task.completed) return false;
+                if (currentFilter === 'completed' && !task.completed) return false;
+                return true;
+            });
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="12" y1="18" x2="12" y2="12"></line>
+                                <line x1="9" y1="15" x2="15" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h3 class="empty-title">${tasks.length === 0 ? 'No tasks yet!' : 'No matching tasks'}</h3>
+                        <p class="empty-text">${tasks.length === 0 ? 'Add your first task above!' : 'Try adjusting your search or filter'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredTasks.map((task, index) => {
+                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.completed;
+                const formattedDate = task.dueDate ? formatDate(task.dueDate) : '';
+
+                return `
+                    <div class="task-item ${task.completed ? 'completed' : ''}" style="animation-delay: ${Math.min(index * 0.03, 0.15)}s">
+                        <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${task.id})">
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="task-content">
+                            <div class="task-title">${escapeHtml(task.title)}</div>
+                            <div class="task-meta">
+                                <span class="task-tag tag-${task.category}">${task.category}</span>
+                                <span class="task-priority priority-${task.priority}">${task.priority}</span>
+                                ${formattedDate ? `
+                                    <span class="task-date ${isOverdue ? 'overdue' : ''}">
+                                        <svg viewBox="0 0 24 24">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                        ${formattedDate}
+                                    </span>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-btn" onclick="openEditModal(${task.id})" title="Edit">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteTask(${task.id})" title="Delete">
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update stats
+        function updateStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const pending = total - completed;
+            const today = new Date().toISOString().split('T')[0];
+            const overdue = tasks.filter(t => t.dueDate && t.dueDate < today && !t.completed).length;
+
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('pendingTasks').textContent = pending;
+            document.getElementById('overdueTasks').textContent = overdue;
+        }
+
+        // Save to localStorage
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+                error: '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+                info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+            };
+
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type]}</span>
+                <span class="toast-message">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            if (dateStr === today.toISOString().split('T')[0]) {
+                return 'Today';
+            } else if (dateStr === tomorrow.toISOString().split('T')[0]) {
+                return 'Tomorrow';
+            } else {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal on outside click
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') closeModal();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                document.getElementById('taskInput').focus();
+            }
+        });
+    </script>
+</body>
+</html>
